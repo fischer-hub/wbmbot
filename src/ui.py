@@ -59,8 +59,14 @@ def setup(self):
         wbs_rooms_input.setMinimum(1)
         wbs_rooms_input.setMaximum(100)
 
-        start_bot_btn = QPushButton("Start bot")
+        self.start_bot_btn = QPushButton("Start bot")
+        self.start_bot_btn.clicked.connect(self.handle_start_stop_btn)
+        self.start_bot_btn.setStyleSheet("background-color: rgb(128,242,159)")
+
+
+    
         self.console_out   = QTextEdit(readOnly=True)
+        self.console_out.setLineWrapMode(QTextEdit.NoWrap)
 
 
         # Sends the current index (position) of the selected item.
@@ -81,7 +87,6 @@ def setup(self):
         wbs_conf_box       = QHBoxLayout()
         wbs_conf_box_left  = QVBoxLayout()
         wbs_conf_box_right = QVBoxLayout()
-        print('test')
 
         conf_box_left.addWidget(firstname_input)
         conf_box_right.addWidget(lastname_input)
@@ -92,7 +97,7 @@ def setup(self):
         conf_box_left.addWidget(email_input)
         conf_box_right.addWidget(phone_input)
         conf_box_left.addWidget(wbs_bool_input)
-        conf_box_right.addWidget(start_bot_btn)
+        conf_box_right.addWidget(self.start_bot_btn)
         
         wbs_conf_box_left.addWidget(wbs_num_select)
         wbs_conf_box_right.addWidget(wbs_date_input)
@@ -106,6 +111,7 @@ def setup(self):
         console_box.addWidget(self.console_out)
         main.addLayout(conf_box, 6)
         main.addWidget(self.wbs_conf_frame, 4)
+        main.addWidget(QLabel('Console output:'))
         main.addLayout(console_box, 20)
 
         widget = QWidget()
