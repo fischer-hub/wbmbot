@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from email.policy import default
 import sys, time, datetime, hashlib, yaml, os.path
 from selenium import webdriver 
 from selenium.webdriver.chrome.options import Options
@@ -55,27 +54,27 @@ class Flat:
 class User:
   def __init__(self, config):
       self.first_name = config['first_name']
-      self.last_name = config['last_name']
-      self.street = config['street']
-      self.zip_code = config['zip_code']
-      self.city = config['city']
-      self.email = config['email'].split(',')
-      self.phone = config['phone']
-      self.wbs = True if 'yes' in config['wbs'] else False
-      self.wbs_date = config['wbs_date'].replace('/', '')
-      self.wbs_rooms = config['wbs_rooms']
-      self.filter = config['filter'].split(',')
+      self.last_name  = config['last_name']
+      self.street     = config['street']
+      self.zip_code   = config['zip_code']
+      self.city       = config['city']
+      self.email      = config['email'].split(',')
+      self.phone      = config['phone']
+      self.wbs        = True if 'yes' in config['wbs'] else False
+      self.wbs_date   = config['wbs_date'].replace('/', '')
+      self.wbs_rooms  = config['wbs_rooms']
+      self.filter     = config['filter'].split(',')
       
       if '100' in config['wbs_num']:
-        self.wbs_num = 'WBS 100'
+        self.wbs_num  = 'WBS 100'
       elif '140' in config['wbs_num']:
-        self.wbs_num = 'WBS 140'
+        self.wbs_num  = 'WBS 140'
       elif '160' in config['wbs_num']:
-        self.wbs_num = 'WBS 160'
+        self.wbs_num  = 'WBS 160'
       elif '180' in config['wbs_num']:
-        self.wbs_num = 'WBS 180'
+        self.wbs_num  = 'WBS 180'
       else:
-        self.wbs_num = ''
+        self.wbs_num  = ''
 
 
 def setup():
