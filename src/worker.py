@@ -1,19 +1,21 @@
 # worker.py
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import time
-from src import bot
-
+from src.user import User
 
 class Worker(QObject):
-    console_out_sig = pyqtSignal(str)
     finished = pyqtSignal()
-    intReady = pyqtSignal(int)
+    console_out_sig = pyqtSignal(str)
+    headless_off = True
+    test = True
+    interval = 0.1
+    running = False
+    user = User()
+    var = ''
+
 
     @pyqtSlot()
     def run_wbmbot(self):
-        headless_off=True
-        test=True
-        interval=5
         import sys, time, datetime, hashlib, yaml, os.path
         from selenium import webdriver 
         from selenium.webdriver.chrome.options import Options
@@ -22,20 +24,10 @@ class Worker(QObject):
         from webdriver_manager.chrome import ChromeDriverManager
 
 
-        from argparse import ArgumentParser
-
-        #parser = ArgumentParser()
-        #parser.add_argument("-H", "--headless_off", action='store_false', help="If set, turn off headless run. The bot will run in the opened browser.")
-        #parser.add_argument("-t", "--test", action='store_true', help="If set, run test-run on the test data. This does not actually connect to wbm.de.")
-        #parser.add_argument("-i", "--interval", default=5, help="Set the time interval in minutes to check for new flats on wbm.de. [default: 5]")
-
-        #args = parser.parse_args()
-
-
         chrome_options = Options()
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--disable-gpu")
-        chrome_options.headless = headless_off
+        chrome_options.headless = self.headless_off
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         driver.implicitly_wait(5)
 
@@ -47,9 +39,8 @@ class Worker(QObject):
         id = 0
         curr_page_num = 1
         page_changed = False
-        TEST = test
+        TEST = self.test
         if TEST: self.console_out_sig.emit(f"------------------TEST RUN------------------")
-        self.console_out_sig.emit
 
         class Flat:
             def __init__(self, flat_elem):
@@ -65,31 +56,6 @@ class Worker(QObject):
                 self.rooms      =  flat_attr[12] if attr_size > 12 else ''
                 self.wbs        = True if ('wbs' in flat_elem or 'WBS' in flat_elem) else False
                 self.hash       = hashlib.sha256(flat_elem.encode('utf-8')).hexdigest()
-
-        class User:
-            def __init__(self, config):
-                self.first_name = config['first_name']
-                self.last_name  = config['last_name']
-                self.street     = config['street']
-                self.zip_code   = config['zip_code']
-                self.city       = config['city']
-                self.email      = config['email'].split(',')
-                self.phone      = config['phone']
-                self.wbs        = True if 'yes' in config['wbs'] else False
-                self.wbs_date   = config['wbs_date'].replace('/', '')
-                self.wbs_rooms  = config['wbs_rooms']
-                self.filter     = config['filter'].split(',')
-                
-                if '100' in config['wbs_num']:
-                    self.wbs_num  = 'WBS 100'
-                elif '140' in config['wbs_num']:
-                    self.wbs_num  = 'WBS 140'
-                elif '160' in config['wbs_num']:
-                    self.wbs_num  = 'WBS 160'
-                elif '180' in config['wbs_num']:
-                    self.wbs_num  = 'WBS 180'
-                else:
-                    self.wbs_num  = ''
 
 
         def setup():
@@ -170,27 +136,20 @@ class Worker(QObject):
         # check if config exists, else start setup
         if os.path.isfile("config.yaml"):
             self.console_out_sig.emit(f"[{date()}] Loading config..")
-            with open("config.yaml", "r") as config:
-                try:
-                    user = User(yaml.safe_load(config))
-                except yaml.YAMLError as exc:
-                    self.console_out_sig.emit(f"[{date()}] Error opening config file! ")
+            user = self.user.parse_config_file('config.yaml')
         else:
             self.console_out_sig.emit(f"[{date()}] No config file found, starting setup..")
             setup()
             self.console_out_sig.emit(f"[{date()}] Loading config..")
-            with open("config.yaml", "r") as config:
-                try:
-                    user = User(yaml.safe_load(config))
-                except yaml.YAMLError as exc:
-                    self.console_out_sig.emit(f"[{date()}] Error opening config file! ")
+            self.user.parse_config_file('config.yaml')
+
 
         if not os.path.isfile('log.txt'): open('log.txt', 'a').close()
 
-        start_url = f"file://{os.getcwd()}/test-data/wohnung_mehrere_seiten.html" if TEST else "https://www.wbm.de/wohnungen-berlin/angebote/"
+        start_url = f"file://{os.getcwd()}/self.test-data/wohnung_mehrere_seiten.html" if TEST else "https://www.wbm.de/wohnungen-berlin/angebote/"
 
-
-        while True:
+        # We could actually just use while True, since we break the loop anyway before reaching this code if self.running is False..
+        while self.running:
 
             self.console_out_sig.emit(f"[{date()}] Connecting to {start_url}")
 
@@ -277,16 +236,20 @@ class Worker(QObject):
 
             else:
                 # List of flats is empty there is no flat displayed on current page
-                self.console_out_sig.emit(f"[{date()}] Currently no flats available :(")
+                self.console_out_sig.emit(f"[{date()}] {self.var} Currently no flats available :(")
 
-            if not page_changed : 
-                time.sleep(interval * 60)
+            if not self.running:
+                break
+
+            if not page_changed: 
+                time.sleep(self.interval * 60)
             else:
                 time.sleep(1.5)
 
             self.console_out_sig.emit(f"[{date()}] Reloading main page..")
 
-        #driver.quit()
+        driver.quit()
+        self.finished.emit()
 
             
 

@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QPalette, QColor, QTextCursor
-from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread
+from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread, QTimer
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication, QDateEdit, QFrame, QTextEdit,
     QLabel, QCheckBox, QComboBox, QListWidget, QLineEdit,
@@ -24,30 +24,35 @@ def setup(self):
         necessary_field_pal = firstname_input.palette()
         necessary_field_pal.setColor(QPalette.PlaceholderText, QColor(170,0,0,190))
         firstname_input.setPalette(necessary_field_pal)
+        firstname_input.textEdited.connect(lambda text: self.text_edited(text, 0))
 
         lastname_input = QLineEdit()
         lastname_input.setPlaceholderText("Last name")
         lastname_input.setPalette(necessary_field_pal)
+        lastname_input.textEdited.connect(lambda text: self.text_edited(text, 1))
 
         street_input   = QLineEdit()
         street_input.setPlaceholderText("Street name and house number")
+        street_input.textEdited.connect(lambda text: self.text_edited(text, 2))
 
         zip_code_input = QLineEdit()
         zip_code_input.setMaxLength(5)
         zip_code_input.setPlaceholderText("Zip code")
+        #zip_code_input.setInputMask('00000;_')
+        zip_code_input.textEdited.connect(lambda text: self.text_edited(text, 3))
         
         city_input     = QLineEdit()
         city_input.setPlaceholderText("City name")
+        city_input.textEdited.connect(lambda text: self.text_edited(text, 4))
 
         email_input    = QLineEdit()
         email_input.setPlaceholderText("Email address")
         email_input.setPalette(necessary_field_pal)
+        email_input.textEdited.connect(lambda text: self.text_edited(text, 5))
 
         phone_input    = QLineEdit()
         phone_input.setPlaceholderText("Phone number")
-
-        filter_input   = QLineEdit()
-        filter_input.setPlaceholderText("Keywords for filtering")
+        phone_input.textEdited.connect(lambda text: self.text_edited(text, 6))
 
         wbs_bool_input = QCheckBox("I have a WBS (Wohnberechtigungsschein)")
         wbs_bool_input.setCheckState(Qt.Unchecked)
@@ -59,12 +64,14 @@ def setup(self):
         wbs_rooms_input.setMinimum(1)
         wbs_rooms_input.setMaximum(100)
 
+        filter_input   = QLineEdit()
+        filter_input.setPlaceholderText("Keywords for filtering")
+        filter_input.textEdited.connect(lambda text: self.text_edited(text, 10))
+
         self.start_bot_btn = QPushButton("Start bot")
         self.start_bot_btn.clicked.connect(self.handle_start_stop_btn)
         self.start_bot_btn.setStyleSheet("background-color: rgb(128,242,159)")
 
-
-    
         self.console_out   = QTextEdit(readOnly=True)
         self.console_out.setLineWrapMode(QTextEdit.NoWrap)
 
@@ -75,32 +82,46 @@ def setup(self):
         # There is an alternate signal to send the text.
         #wbs_num_select.currentTextChanged.connect( self.text_changed )
 
-        main            = QVBoxLayout()
-        conf_box        = QHBoxLayout()
-        console_box     = QHBoxLayout()
-        conf_box_left   = QVBoxLayout()
-        conf_box_right  = QVBoxLayout()
-        zip_city_layout = QHBoxLayout()
+        main                = QVBoxLayout()
+        conf_box            = QHBoxLayout()
+        console_box         = QHBoxLayout()
+        conf_box_left       = QVBoxLayout()
+        conf_box_right      = QVBoxLayout()
+        zip_city_layout     = QHBoxLayout()
+        phone_filter_layout = QHBoxLayout()
+        wbs_date_pick_label = QHBoxLayout()
+        wbs_rooms_label     = QHBoxLayout()
 
         self.wbs_conf_frame = QFrame()
 
-        wbs_conf_box       = QHBoxLayout()
-        wbs_conf_box_left  = QVBoxLayout()
-        wbs_conf_box_right = QVBoxLayout()
+        wbs_conf_box        = QHBoxLayout()
+        wbs_conf_box_left   = QVBoxLayout()
+        wbs_conf_box_right  = QVBoxLayout()
 
         conf_box_left.addWidget(firstname_input)
-        conf_box_right.addWidget(lastname_input)
-        conf_box_left.addWidget(street_input)
+        conf_box_right.addWidget(street_input)
+        conf_box_left.addWidget(lastname_input)
         zip_city_layout.addWidget(zip_code_input)
         zip_city_layout.addWidget(city_input)
         conf_box_right.addLayout(zip_city_layout)
         conf_box_left.addWidget(email_input)
-        conf_box_right.addWidget(phone_input)
+        phone_filter_layout.addWidget(phone_input)
+        phone_filter_layout.addWidget(filter_input)
+        conf_box_right.addLayout(phone_filter_layout)
         conf_box_left.addWidget(wbs_bool_input)
         conf_box_right.addWidget(self.start_bot_btn)
         
-        wbs_conf_box_left.addWidget(wbs_num_select)
-        wbs_conf_box_right.addWidget(wbs_date_input)
+        wbs_date_pick_label.addWidget(QLabel('WBS is valid until date:'))
+        wbs_date_pick_label.addWidget(wbs_date_input)
+        wbs_conf_box_left.addLayout(wbs_date_pick_label)
+        wbs_conf_box_right.addWidget(wbs_num_select)
+        
+        wbs_rooms_label.addWidget(QLabel('WBS is valid for rooms:'))
+        wbs_rooms_label.addWidget(wbs_rooms_input)
+        wbs_conf_box_left.addLayout(wbs_rooms_label)
+
+        #wbs_conf_box_right.addWidget(wbs_date_input)
+        wbs_conf_box_right.addWidget(QLabel("              Hier könnte Ihre Werbung stehen!"))#.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter))
         wbs_conf_box.addLayout(wbs_conf_box_left)
         wbs_conf_box.addLayout(wbs_conf_box_right)
         self.wbs_conf_frame.setLayout(wbs_conf_box)
@@ -111,7 +132,7 @@ def setup(self):
         console_box.addWidget(self.console_out)
         main.addLayout(conf_box, 6)
         main.addWidget(self.wbs_conf_frame, 4)
-        main.addWidget(QLabel('Console output:'))
+        main.addWidget(QLabel(' Console output:'))
         main.addLayout(console_box, 20)
 
         widget = QWidget()
