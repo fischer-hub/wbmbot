@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QPalette, QColor, QTextCursor
+from PyQt5.QtGui import QPalette, QColor, QTextCursor, QKeySequence
 from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread, QTimer
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication, QDateEdit, QFrame, QTextEdit,
@@ -9,15 +9,34 @@ from PyQt5.QtWidgets import (
 )
 
 def setup(self):
+
+        ### Menu
         menu = self.menuBar()
 
+        ## File
         file_menu = menu.addMenu("&File")
-        #file_menu.addAction(button_action)
 
+        # Load config from condig file
+        load_config_btn = QAction("&Load config file", self)
+        load_config_btn.setStatusTip("Load configuration to run the bot with from configuration file.")
+        load_config_btn.setShortcut(QKeySequence("Ctrl+l"))
 
-        # selector
-        wbs_num_select = QComboBox()
-        wbs_num_select.addItems(["WBS 100", "WBS 140", "WBS 160", "WBS 180"])
+        file_menu.addAction(load_config_btn)
+
+        # Save config to condig file
+        save_config_btn = QAction("&Save config to file", self)
+        save_config_btn.setStatusTip("Save current configuration to configuration file.")
+        save_config_btn.setShortcut(QKeySequence("Ctrl+s"))
+        file_menu.addAction(save_config_btn)
+
+        ## Settings
+        settings_menu = menu.addMenu("&Settings")
+        set_test_run_btn = QAction("&Test run", self)
+        set_test_run_btn.setStatusTip("Only run on test-data, this does not require a network connection.")
+        set_test_run_btn.setCheckable(True)
+        set_test_run_btn.triggered.connect(self.set_test_run)
+        settings_menu.addAction(set_test_run_btn)
+
 
         firstname_input = QLineEdit()
         firstname_input.setPlaceholderText("First name")
@@ -58,7 +77,7 @@ def setup(self):
         wbs_bool_input.setCheckState(Qt.Unchecked)
         wbs_bool_input.stateChanged.connect(self.show_wbs_conf_box)
         
-        wbs_date_input = QDateEdit()
+        wbs_date_input = QDateEdit(calendarPopup=True)
 
         wbs_rooms_input= QSpinBox()
         wbs_rooms_input.setMinimum(1)
@@ -67,6 +86,10 @@ def setup(self):
         filter_input   = QLineEdit()
         filter_input.setPlaceholderText("Keywords for filtering")
         filter_input.textEdited.connect(lambda text: self.text_edited(text, 10))
+
+        wbs_num_select = QComboBox()
+        wbs_num_select.addItems(["WBS 100", "WBS 140", "WBS 160", "WBS 180"])
+        wbs_num_select.currentTextChanged.connect(lambda text: self.text_edited(text, 11))
 
         self.start_bot_btn = QPushButton("Start bot")
         self.start_bot_btn.clicked.connect(self.handle_start_stop_btn)

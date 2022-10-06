@@ -2,8 +2,9 @@
 from os import setuid
 from sqlite3 import connect
 import sys
-from src import ui, worker
+from src import ui, worker, utils
 from src.user import User
+
 
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication, QDateEdit, QFrame, QTextEdit,
@@ -13,7 +14,9 @@ from PyQt5.QtWidgets import (
     QLabel, QToolBar, QAction, QStatusBar, QWidget
 )
 from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread, QTimer
-from PyQt5.QtGui import QPalette, QColor, QTextCursor
+from PyQt5.QtGui import QPalette, QColor
+
+
 
 class Stream(QObject):
     newText = pyqtSignal(str)
@@ -21,13 +24,14 @@ class Stream(QObject):
     def write(self, text):
         self.newText.emit(str(text))
 
+
 class Input:
     def __init__(self, text, field):
         self.text = text
         self.field = field
 
-class Color(QWidget):
 
+class Color(QWidget):
     def __init__(self, color):
         super(Color, self).__init__()
         self.setAutoFillBackground(True)
@@ -35,6 +39,7 @@ class Color(QWidget):
         palette = self.palette()
         palette.setColor(QPalette.Window, QColor(color))
         self.setPalette(palette)
+
 
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
@@ -46,13 +51,14 @@ class MainWindow(QMainWindow):
         self.bot_running_bool = False
         self.worker_created = False
         self.bot_stopped = True
-        self.input_ls = [''] * 11
+        self.input_ls = [''] * 12
         self.gui_user = User()
+        self.test_run = False
 
         self.timer = QTimer()
         self.timer.setSingleShot(True)
         #timer.connect(timer,QTimer::timeout(),OnTimerDone(...);
-        self.timer.timeout.connect(self.on_timeout)
+        self.timer.timeout.connect(self.update_user)
 
         self.setup_worker()
 
@@ -60,23 +66,26 @@ class MainWindow(QMainWindow):
 
         sys.stdout = Stream(newText=self.onUpdateText)
     
-    def on_timeout(self):
+    def set_test_run(self, checked):
+        self.test_run = checked
+        self.worker.test = checked
+
+    def update_user(self):
         new_user = User()
+        print(self.input_ls)
         new_user.parse_user_input(self.input_ls)
         user_invalid_msg = new_user.check()
         if user_invalid_msg:            
-            print(user_invalid_msg)
+            print(f"[{utils.date()}] ERROR: {user_invalid_msg}")
         else:
             self.gui_user = new_user
-
-        print("inputls: ", self.input_ls)
-        print("user obj: ", self.gui_user.first_name)
-
+            self.worker.user = self.gui_user
         
+
     def text_edited(self, text, position):
-        #self.user_input = Input(text, field)
         self.input_ls[position] = text
-        self.timer.start(5000)
+        self.timer.start(3000)
+
 
     def setup_worker(self):
         # 1 - create Worker and Thread inside the Form
@@ -96,10 +105,13 @@ class MainWindow(QMainWindow):
     def handle_bot_stopped(self):
         #self.thread.quit
         self.bot_stopped = True
+        self.start_bot_btn.setEnabled(True)
         print("Done!")
     
+
     def handle_start_stop_btn(self):
         if not self.worker.running:
+            self.update_user()
             self.thread.start()
             self.start_bot_btn.setText("Stop bot")
             self.start_bot_btn.setStyleSheet("background-color: rgb(222,82,82)")
@@ -107,25 +119,35 @@ class MainWindow(QMainWindow):
             self.bot_stopped = False
         else:
             print("Stopping bot ..")
+            self.start_bot_btn.setEnabled(False)
             self.start_bot_btn.setText("Start bot")
             self.start_bot_btn.setStyleSheet("background-color: rgb(128,242,159)")
             self.worker.running = False        
     
+
     def closeEvent(self, event):
         self.thread.quit
         sys.stdout = sys.__stdout__
         event.accept()
 
+
     def onUpdateText(self, text):
         if self.worker.running or self.bot_stopped: 
             self.console_out.append(f"{text.strip()}")
     
+
     def __del__(self):
         sys.stdout = sys.__stdout__
 
+
     def show_wbs_conf_box(self, state):
-        self.wbs_conf_frame.show() if state == Qt.Checked else self.wbs_conf_frame.hide()
-        self.input_ls[7] = True
+        if state == Qt.Checked:
+            self.input_ls[7] = 'True'
+            self.wbs_conf_frame.show() 
+        else:
+             self.wbs_conf_frame.hide()
+             self.input_ls[7] = ''
+        
 
 
 app = QApplication(sys.argv)

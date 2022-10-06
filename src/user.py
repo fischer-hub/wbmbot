@@ -15,6 +15,7 @@ class User:
         self.wbs_date   = ''
         self.wbs_rooms  = ''
         self.filter     = ''
+        self.wbs_num    = ''
 
     def parse_config_file(self, config_file_path):
         with open(config_file_path, "r") as config_file:
@@ -59,10 +60,12 @@ class User:
             self.wbs_date   = user_input_ls[8]
             self.wbs_rooms  = user_input_ls[9]
             self.filter     = user_input_ls[10]
+            self.wbs_num    = user_input_ls[11]
         else:
             print(f"[{utils.date()}] Please fill out at least all red fields! ")
     
     def check(self):
         if self.zip_code and not self.zip_code.isdigit(): return 'Zip code contains non numerical character!'
         if self.phone and not self.phone.isdigit(): return 'Phone number contains non numerical character!'
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email): return 'Email address is not valid!'
+        #if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email): return 'Email address is not valid!'
+        if (not self.wbs) and bool(self.wbs_date or self.wbs_num or self.wbs_rooms): return 'WBS data was provided but the WBS checkbox was unchecked!'

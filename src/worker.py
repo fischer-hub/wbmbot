@@ -2,6 +2,7 @@
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import time
 from src.user import User
+from src import utils
 
 class Worker(QObject):
     finished = pyqtSignal()
@@ -31,12 +32,6 @@ class Worker(QObject):
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         driver.implicitly_wait(5)
 
-        def date():
-            return datetime.datetime.fromtimestamp(time.time()).strftime('%d.%m.%Y - %H:%M')
-
-
-        flats = []
-        id = 0
         curr_page_num = 1
         page_changed = False
         TEST = self.test
@@ -92,7 +87,7 @@ class Worker(QObject):
             else:
                 data['filter'] = ''
 
-            self.console_out_sig.emit(f"[{date()}]Done! Writing config file..")
+            self.console_out_sig.emit(f"[{utils.date()}]Done! Writing config file..")
 
             with open('config.yaml', 'w') as outfile:
                 yaml.dump(data, outfile, default_flow_style=False)
@@ -100,58 +95,60 @@ class Worker(QObject):
         def next_page(curr_page_num):
             if driver.find_elements(By.XPATH, '/html/body/main/div[2]/div[1]/div/nav/ul/li[4]/a'):
                 page_list = driver.find_element(By.XPATH, "/html/body/main/div[2]/div[1]/div/nav/ul")
-                self.console_out_sig.emit(f"[{date()}] Another page of flats was detected, switching to page {curr_page_num +1}/{len(page_list.find_elements(By.TAG_NAME, 'li'))-2}..")
+                self.console_out_sig.emit(f"[{utils.date()}] Another page of flats was detected, switching to page {curr_page_num +1}/{len(page_list.find_elements(By.TAG_NAME, 'li'))-2}..")
                 try:
                     page_list.find_elements(By.TAG_NAME, 'li')[curr_page_num + 1].click()
                     return curr_page_num + 1
                 except:
-                    self.console_out_sig.emit(f"[{date()}] Failed to switch page, returning to main page..")
+                    self.console_out_sig.emit(f"[{utils.date()}] Failed to switch page, returning to main page..")
                     return curr_page_num
             else:
-                self.console_out_sig.emit(f"[{date()}] Failed to switch page, lastpage reached..")
+                self.console_out_sig.emit(f"[{utils.date()}] Failed to switch page, lastpage reached..")
                 return curr_page_num
 
         def continue_btn():
-            self.console_out_sig.emit(f"[{date()}] Looking for continue button..")
+            self.console_out_sig.emit(f"[{utils.date()}] Looking for continue button..")
             continue_btn = flat_elem.find_element(By.XPATH, '//*[@title="Details"]')
-            self.console_out_sig.emit(f"[{date()}] Flat link found: {continue_btn.get_attribute('href')}")
+            self.console_out_sig.emit(f"[{utils.date()}] Flat link found: {continue_btn.get_attribute('href')}")
             continue_btn.location_once_scrolled_into_view
             driver.get(continue_btn.get_attribute('href'))
 
         def fill_form(email):
-            self.console_out_sig.emit(f"[{date()}] Filling out form for email adress '{email}' ..")
+            self.console_out_sig.emit(f"[{utils.date()}] Filling out form for email adress '{email}' ..")
             driver.find_element(By.XPATH, '//*[@id="c722"]/div/div/form/div[2]/div[1]/div/div/div[1]/label').click()
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_wbsgueltigbis"]').send_keys(user.wbs_date)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_wbszimmeranzahl"]').send_keys(user.wbs_rooms)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_einkommensgrenzenacheinkommensbescheinigung9"]').send_keys(user.wbs_num)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_name"]').send_keys(user.last_name)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_vorname"]').send_keys(user.first_name)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_strasse"]').send_keys(user.street)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_plz"]').send_keys(user.zip_code)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_ort"]').send_keys(user.city)
+            driver.find_element(By.XPATH, '//*[@id="powermail_field_wbsgueltigbis"]').send_keys(self.user.wbs_date)
+            driver.find_element(By.XPATH, '//*[@id="powermail_field_wbszimmeranzahl"]').send_keys(self.user.wbs_rooms)
+            driver.find_element(By.XPATH, '//*[@id="powermail_field_einkommensgrenzenacheinkommensbescheinigung9"]').send_keys(self.user.wbs_num)
+            driver.find_element(By.XPATH, '//*[@id="powermail_field_name"]').send_keys(self.user.last_name)
+            driver.find_element(By.XPATH, '//*[@id="powermail_field_vorname"]').send_keys(self.user.first_name)
+            driver.find_element(By.XPATH, '//*[@id="powermail_field_strasse"]').send_keys(self.user.street)
+            driver.find_element(By.XPATH, '//*[@id="powermail_field_plz"]').send_keys(self.user.zip_code)
+            driver.find_element(By.XPATH, '//*[@id="powermail_field_ort"]').send_keys(self.user.city)
             driver.find_element(By.XPATH, '//*[@id="powermail_field_e_mail"]').send_keys(email)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_telefon"]').send_keys(user.phone)
+            driver.find_element(By.XPATH, '//*[@id="powermail_field_telefon"]').send_keys(self.user.phone)
             driver.find_element(By.XPATH, '//*[@id="c722"]/div/div/form/div[2]/div[14]/div/div/div[1]/label').click()
 
         # check if config exists, else start setup
-        if os.path.isfile("config.yaml"):
-            self.console_out_sig.emit(f"[{date()}] Loading config..")
-            user = self.user.parse_config_file('config.yaml')
+        """ if os.path.isfile("config.yaml"):
+            self.console_out_sig.emit(f"[{utils.date()}] Loading config..")
+            self.user = self.self.user.parse_config_file('config.yaml')
         else:
-            self.console_out_sig.emit(f"[{date()}] No config file found, starting setup..")
+            self.console_out_sig.emit(f"[{utils.date()}] No config file found, starting setup..")
             setup()
-            self.console_out_sig.emit(f"[{date()}] Loading config..")
-            self.user.parse_config_file('config.yaml')
+            self.console_out_sig.emit(f"[{utils.date()}] Loading config..")
+            self.self.user.parse_config_file('config.yaml') """
 
 
         if not os.path.isfile('log.txt'): open('log.txt', 'a').close()
 
-        start_url = f"file://{os.getcwd()}/self.test-data/wohnung_mehrere_seiten.html" if TEST else "https://www.wbm.de/wohnungen-berlin/angebote/"
+        start_url = f"file://{os.getcwd()}/test-data/wohnung_mehrere_seiten.html" if TEST else "https://www.wbm.de/wohnungen-berlin/angebote/"
+        if not os.path.isfile(f"{os.getcwd()}/test-data/wohnung_mehrere_seiten.html"):
+            self.console_out_sig.emit(f"[{utils.date()}] {os.getcwd()}/test-data/wohnung_mehrere_seiten.html\n not found")
 
         # We could actually just use while True, since we break the loop anyway before reaching this code if self.running is False..
         while self.running:
 
-            self.console_out_sig.emit(f"[{date()}] Connecting to {start_url}")
+            self.console_out_sig.emit(f"[{utils.date()}] Connecting to {start_url}")
 
             # If we are on same page as last iteration, there probably is only one page or last page was reached and we want to reload the first page
             if not page_changed:
@@ -161,17 +158,17 @@ class Worker(QObject):
 
             # Check if cookie dialog is displayed and accept if so
             if len(driver.find_elements(By.XPATH, '//*[@id="cdk-overlay-0"]/div[2]/div[2]/div[2]/button[2]')) > 0:
-                self.console_out_sig.emit(f"[{date()}] Accepting cookies..")
+                self.console_out_sig.emit(f"[{utils.date()}] Accepting cookies..")
                 driver.find_element(By.XPATH, '//*[@id="cdk-overlay-0"]/div[2]/div[2]/div[2]/button[2]').click()
             
             # Find all flat offers displayed on current page
-            self.console_out_sig.emit(f"[{date()}] Looking for flats..")
+            self.console_out_sig.emit(f"[{utils.date()}] Looking for flats..")
             all_flats = driver.find_elements(By.CSS_SELECTOR, ".row.openimmo-search-list-item")
             
             # If there is at least one flat start further checks
             if all_flats:
 
-                self.console_out_sig.emit(f"[{date()}] Found {len(all_flats)} flat(s) in total:")
+                self.console_out_sig.emit(f"[{utils.date()}] Found {len(all_flats)} flat(s) in total:")
 
                 # For every flat do checks
                 for i in range(0,len(all_flats)):
@@ -190,7 +187,7 @@ class Worker(QObject):
                         log = myfile.read()
                     
                     # Check if we already applied to flat by looking for its unique hash in the log file
-                    for email in user.email:
+                    for email in self.user.email:
 
                         # We need to generate the flat_elem every iteration because otherwise they will go stale for some reason
                         all_flats = driver.find_elements(By.CSS_SELECTOR, ".row.openimmo-search-list-item")
@@ -198,16 +195,16 @@ class Worker(QObject):
                         if (str(flat.hash) + str(email).strip()) not in log:
 
                             # Check if we omit flat because of filter keyword contained
-                            if any(str(keyword).strip() in flat_elem.text.lower() for keyword in user.filter):
-                                self.console_out_sig.emit(f"[{date()}] Ignoring flat '{flat.title}' because it contains filter keyword(s).")
+                            if any(str(keyword).strip() in flat_elem.text.lower() for keyword in self.user.filter):
+                                self.console_out_sig.emit(f"[{utils.date()}] Ignoring flat '{flat.title}' because it contains filter keyword(s).")
                                 break
                             else:
-                                self.console_out_sig.emit(f"[{date()}] Title: {flat.title}")
+                                self.console_out_sig.emit(f"[{utils.date()}] Title: {flat.title}")
 
                                 # Find and click continue button on current flat
                                 continue_btn()
 
-                                # Fill out application form on current flat using info stored in user object
+                                # Fill out application form on current flat using info stored in self.user object
                                 fill_form(str(email).strip())
                                 
                                 # Submit form
@@ -215,17 +212,16 @@ class Worker(QObject):
 
                                 # Write flat info to log file
                                 with open("log.txt", "a") as myfile:
-                                    myfile.write(f"[{date()}] - ID: {id}\nApplication sent for flat:\n{flat.title}\n{flat.street}\n{flat.city + ' ' + flat.zip_code}\ntotal rent: {flat.total_rent}\nflat size: {flat.size}\nrooms: {flat.rooms}\nwbs: {flat.wbs}\nhash: {flat.hash}{str(email).strip()}\n\n")
+                                    myfile.write(f"[{utils.date()}] - ID: \nApplication sent for flat:\n{flat.title}\n{flat.street}\n{flat.city + ' ' + flat.zip_code}\ntotal rent: {flat.total_rent}\nflat size: {flat.size}\nrooms: {flat.rooms}\nwbs: {flat.wbs}\nhash: {flat.hash}{str(email).strip()}\n\n")
 
-                                # Increment id (not really used anymore)
-                                id += 1
-                                self.console_out_sig.emit(f"[{date()}] Done!")
+                                # Increment (not really used anymore)
+                                self.console_out_sig.emit(f"[{utils.date()}] Done!")
                                 
                                 time.sleep(1.5)
                                 driver.get(start_url)
                         else:
                             # Flats hash was found in log file
-                            self.console_out_sig.emit(f"[{date()}] Oops, we already applied for flat: {flat.title}, with ID: {id}!")
+                            self.console_out_sig.emit(f"[{utils.date()}] Oops, we already applied for flat: {flat.title}, with ID: !")
                             break
 
                     # We checked all flats on this page, try to switch to next page if exists. This should be called in last iteration
@@ -236,7 +232,7 @@ class Worker(QObject):
 
             else:
                 # List of flats is empty there is no flat displayed on current page
-                self.console_out_sig.emit(f"[{date()}] {self.var} Currently no flats available :(")
+                self.console_out_sig.emit(f"[{utils.date()}] Currently no flats available :(")
 
             if not self.running:
                 break
@@ -246,7 +242,7 @@ class Worker(QObject):
             else:
                 time.sleep(1.5)
 
-            self.console_out_sig.emit(f"[{date()}] Reloading main page..")
+            self.console_out_sig.emit(f"[{utils.date()}] Reloading main page..")
 
         driver.quit()
         self.finished.emit()
