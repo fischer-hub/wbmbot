@@ -118,6 +118,7 @@ class MainWindow(QMainWindow):
         else:
             self.gui_user = new_user
             self.worker.user = self.gui_user
+            print(f"[{utils.date()}] Config changes saved.")
         
 
     def text_edited(self, text, position):

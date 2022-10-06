@@ -68,7 +68,7 @@ class User:
     def check(self):
         if not bool(self.first_name and self.last_name and self.email): return 'Please fill out at least all red fields!'
         if self.zip_code and not self.zip_code.isdigit(): return 'Zip code contains non numerical character!'
-        if len(self.zip_code) < 5: return 'Zip code has to be 5 digits long!'
+        if self.zip_code and len(self.zip_code) < 5: return 'Zip code has to be 5 digits long!'
         if self.phone and not self.phone.isdigit(): return 'Phone number contains non numerical character!'
         if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email): return 'Email address is not valid!'
         if (not self.wbs) and bool(self.wbs_date or self.wbs_num or self.wbs_rooms): return 'WBS data was provided but the WBS checkbox was unchecked!'
