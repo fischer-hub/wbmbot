@@ -17,15 +17,16 @@ def setup(self):
         file_menu = menu.addMenu("&File")
 
         # Load config from condig file
-        load_config_btn = QAction("&Load config file", self)
+        load_config_btn = QAction("&Open config file", self)
         load_config_btn.setStatusTip("Load configuration to run the bot with from configuration file.")
-        load_config_btn.setShortcut(QKeySequence("Ctrl+l"))
-
+        load_config_btn.triggered.connect(self.handle_load_conf_dlg)
+        load_config_btn.setShortcut(QKeySequence("Ctrl+o"))
         file_menu.addAction(load_config_btn)
 
         # Save config to condig file
         save_config_btn = QAction("&Save config to file", self)
         save_config_btn.setStatusTip("Save current configuration to configuration file.")
+        save_config_btn.triggered.connect(self.handle_save_conf_dlg)
         save_config_btn.setShortcut(QKeySequence("Ctrl+s"))
         file_menu.addAction(save_config_btn)
 

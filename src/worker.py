@@ -8,8 +8,8 @@ class Worker(QObject):
     finished = pyqtSignal()
     console_out_sig = pyqtSignal(str)
     headless_off = True
-    test = True
-    interval = 0.1
+    test = False
+    interval = 5
     running = False
     user = User()
     var = ''
@@ -103,7 +103,7 @@ class Worker(QObject):
                     self.console_out_sig.emit(f"[{utils.date()}] Failed to switch page, returning to main page..")
                     return curr_page_num
             else:
-                self.console_out_sig.emit(f"[{utils.date()}] Failed to switch page, lastpage reached..")
+                self.console_out_sig.emit(f"[{utils.date()}] Can not switch page, lastpage reached..")
                 return curr_page_num
 
         def continue_btn():
@@ -114,7 +114,7 @@ class Worker(QObject):
             driver.get(continue_btn.get_attribute('href'))
 
         def fill_form(email):
-            self.console_out_sig.emit(f"[{utils.date()}] Filling out form for email adress '{email}' ..")
+            self.console_out_sig.emit(f"[{utils.date()}] Filling out form for email adress '{email}'..")
             driver.find_element(By.XPATH, '//*[@id="c722"]/div/div/form/div[2]/div[1]/div/div/div[1]/label').click()
             driver.find_element(By.XPATH, '//*[@id="powermail_field_wbsgueltigbis"]').send_keys(self.user.wbs_date)
             driver.find_element(By.XPATH, '//*[@id="powermail_field_wbszimmeranzahl"]').send_keys(self.user.wbs_rooms)

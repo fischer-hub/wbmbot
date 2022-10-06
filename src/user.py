@@ -17,6 +17,7 @@ class User:
         self.filter     = ''
         self.wbs_num    = ''
 
+
     def parse_config_file(self, config_file_path):
         with open(config_file_path, "r") as config_file:
             try:
@@ -29,11 +30,12 @@ class User:
                 self.city       = config['city']
                 self.email      = config['email'].split(',')
                 self.phone      = config['phone']
-                self.wbs        = True if 'yes' in config['wbs'] else False
+                self.wbs        = True if config['wbs'] else False
                 self.wbs_date   = config['wbs_date'].replace('/', '')
                 self.wbs_rooms  = config['wbs_rooms']
                 self.filter     = config['filter'].split(',')
                 
+                # Necessary for CLI mode
                 if '100' in config['wbs_num']:
                     self.wbs_num  = 'WBS 100'
                 elif '140' in config['wbs_num']:
@@ -45,27 +47,28 @@ class User:
                 else:
                     self.wbs_num  = ''
             except yaml.YAMLError as exc:
-                print(f"[{utils.date()}] Error opening config file! ")
+                print(f"[{utils.date()}] Error opening config file!\n{exc}")
     
+
     def parse_user_input(self, user_input_ls):
-        if user_input_ls[0] and user_input_ls[1] and user_input_ls[5]:
-            self.first_name = user_input_ls[0]
-            self.last_name  = user_input_ls[1]
-            self.street     = user_input_ls[2]
-            self.zip_code   = user_input_ls[3]
-            self.city       = user_input_ls[4]
-            self.email      = user_input_ls[5]
-            self.phone      = user_input_ls[6]
-            self.wbs        = True if user_input_ls[7] else False
-            self.wbs_date   = user_input_ls[8]
-            self.wbs_rooms  = user_input_ls[9]
-            self.filter     = user_input_ls[10]
-            self.wbs_num    = user_input_ls[11]
-        else:
-            print(f"[{utils.date()}] Please fill out at least all red fields! ")
+        self.first_name = user_input_ls[0]
+        self.last_name  = user_input_ls[1]
+        self.street     = user_input_ls[2]
+        self.zip_code   = user_input_ls[3]
+        self.city       = user_input_ls[4]
+        self.email      = user_input_ls[5]
+        self.phone      = user_input_ls[6]
+        self.wbs        = True if user_input_ls[7] else False
+        self.wbs_date   = user_input_ls[8]
+        self.wbs_rooms  = user_input_ls[9]
+        self.filter     = user_input_ls[10]
+        self.wbs_num    = user_input_ls[11]
     
+
     def check(self):
+        if not bool(self.first_name and self.last_name and self.email): return 'Please fill out at least all red fields!'
         if self.zip_code and not self.zip_code.isdigit(): return 'Zip code contains non numerical character!'
+        if len(self.zip_code) < 5: return 'Zip code has to be 5 digits long!'
         if self.phone and not self.phone.isdigit(): return 'Phone number contains non numerical character!'
-        #if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email): return 'Email address is not valid!'
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email): return 'Email address is not valid!'
         if (not self.wbs) and bool(self.wbs_date or self.wbs_num or self.wbs_rooms): return 'WBS data was provided but the WBS checkbox was unchecked!'

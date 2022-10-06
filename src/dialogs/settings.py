@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
     QLabel, QToolBar, QAction, QStatusBar, QWidget, QDialog, QDialogButtonBox
 )
 
-class CustomDialog(QDialog):
+class AdvancedSettings(QDialog):
     interval = pyqtSignal(float)
 
     def __init__(self):
@@ -33,11 +33,4 @@ class CustomDialog(QDialog):
 
     def handle_interval_input(self, interval):
         self.interval.emit(interval)
-
-def open(self):
-    dlg = CustomDialog()
-    if dlg.exec():
-        print("Success!")
-    else:
-        print("Cancel!")
 

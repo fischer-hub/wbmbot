@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-from os import setuid
-from sqlite3 import connect
-import sys
-from src import ui, worker, utils, settings
+import sys, os, yaml
+from src import ui, worker, utils
 from src.user import User
+from src.dialogs import load_config, settings
 
 
 from PyQt5.QtWidgets import (
@@ -11,7 +10,7 @@ from PyQt5.QtWidgets import (
     QLabel, QCheckBox, QComboBox, QListWidget, QLineEdit,
     QLineEdit, QSpinBox, QDoubleSpinBox, QSlider, QPushButton,
     QMainWindow, QApplication, QVBoxLayout, QHBoxLayout,
-    QLabel, QToolBar, QAction, QStatusBar, QWidget
+    QLabel, QToolBar, QAction, QStatusBar, QWidget, QFileDialog
 )
 from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread, QTimer
 from PyQt5.QtGui import QPalette, QColor
@@ -44,52 +43,78 @@ class Color(QWidget):
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
     def __init__(self):
+        # Window own vars
         super(MainWindow, self).__init__()
-
         self.setWindowTitle("WBMBOT")
         self.setFixedSize(QSize(700, 500))
+
+        # Custom vars
         self.bot_running_bool = False
         self.worker_created = False
         self.bot_stopped = True
         self.input_ls = [''] * 12
-        self.gui_user = User()
-        self.settings = settings.CustomDialog()
-        self.settings.interval.connect(self.set_interval)
         self.test_run = False
         self.interval = 5
+        self.config_file = 'config.yaml'
+
+        # Objects
+        self.settings_dlg = settings.AdvancedSettings()
+        self.settings_dlg.interval.connect(self.set_interval)
+
+        #self.load_conf_dlg = load_config.LoadConfig()
+        #self.load_conf_dlg.interval.connect(self.handle_load_conf_dlg)
 
         self.timer = QTimer()
         self.timer.setSingleShot(True)
-        #timer.connect(timer,QTimer::timeout(),OnTimerDone(...);
         self.timer.timeout.connect(self.update_user)
 
+        self.gui_user = User()
+
+        # Setup stuff
         self.setup_worker()
 
         ui.setup(self)
 
         sys.stdout = Stream(newText=self.onUpdateText)
     
+
+    def handle_save_conf_dlg(self):
+        file_name, _ = QFileDialog.getSaveFileName(self,"Save current configuration to file",f"{os.getcwd()}", "YAML Files (*.yaml *.yml);; Any (*)")
+        if file_name.endswith('.yaml') or file_name.endswith('.yml'):
+            with open(file_name, 'w') as outfile: # user vars() to create dict of member vars of user
+                yaml.dump(vars(self.worker.user), outfile, default_flow_style=False)
+
+
+    def handle_load_conf_dlg(self):
+        self.config_file, _ = QFileDialog.getOpenFileName(self, "Open configuration from file", f"{os.getcwd()}", "YAML Files (*.yaml *.yml);; Any (*)")
+        self.update_user(self.config_file)
+
+
     def handle_open_settings(self):
-        self.settings.exec()
-        #settings.open(self)
+        self.settings_dlg.exec()
     
+
     # maybe set these in self and wait for bot to be in wait part to change them in worker obj?
     def set_interval(self, interval):
         self.interval = interval
         self.worker.interval = interval
     
+
     # maybe set these in self and wait for bot to be in wait part to change them in worker obj?
     def set_test_run(self, checked):
         self.test_run = checked
         self.worker.test = checked
 
-    def update_user(self):
+
+    def update_user(self, config_file = ''):
+        add_msg = f"\nCould not load config from file {config_file} because it contains invalid fields."
         new_user = User()
-        print(self.input_ls)
-        new_user.parse_user_input(self.input_ls)
+        
+        new_user.parse_config_file(config_file) if config_file else new_user.parse_user_input(self.input_ls)
+
         user_invalid_msg = new_user.check()
         if user_invalid_msg:            
-            print(f"[{utils.date()}] ERROR: {user_invalid_msg}")
+            print(f"[{utils.date()}] ERROR: {user_invalid_msg}{add_msg if config_file else ''}")
         else:
             self.gui_user = new_user
             self.worker.user = self.gui_user
