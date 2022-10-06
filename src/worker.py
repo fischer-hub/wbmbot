@@ -35,7 +35,7 @@ class Worker(QObject):
         curr_page_num = 1
         page_changed = False
         TEST = self.test
-        if TEST: self.console_out_sig.emit(f"------------------TEST RUN------------------")
+        if TEST: self.console_out_sig.emit(f"------------------TEST {self.interval} RUN------------------")
 
         class Flat:
             def __init__(self, flat_elem):

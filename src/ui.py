@@ -31,11 +31,19 @@ def setup(self):
 
         ## Settings
         settings_menu = menu.addMenu("&Settings")
+
+        # Set test run mode
         set_test_run_btn = QAction("&Test run", self)
         set_test_run_btn.setStatusTip("Only run on test-data, this does not require a network connection.")
         set_test_run_btn.setCheckable(True)
         set_test_run_btn.triggered.connect(self.set_test_run)
         settings_menu.addAction(set_test_run_btn)
+
+        # Open advanced settings
+        advanced_set_btn = QAction("&Advanced", self)
+        advanced_set_btn.setStatusTip("Open advanced settings.")
+        advanced_set_btn.triggered.connect(self.handle_open_settings)
+        settings_menu.addAction(advanced_set_btn)
 
 
         firstname_input = QLineEdit()
@@ -82,6 +90,7 @@ def setup(self):
         wbs_rooms_input= QSpinBox()
         wbs_rooms_input.setMinimum(1)
         wbs_rooms_input.setMaximum(100)
+        #widget.setSuffix("rooms")
 
         filter_input   = QLineEdit()
         filter_input.setPlaceholderText("Keywords for filtering")
@@ -97,7 +106,6 @@ def setup(self):
 
         self.console_out   = QTextEdit(readOnly=True)
         self.console_out.setLineWrapMode(QTextEdit.NoWrap)
-
 
         # Sends the current index (position) of the selected item.
         #wbs_num_select.currentIndexChanged.connect( self.index_changed )

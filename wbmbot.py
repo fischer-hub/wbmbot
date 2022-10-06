@@ -2,7 +2,7 @@
 from os import setuid
 from sqlite3 import connect
 import sys
-from src import ui, worker, utils
+from src import ui, worker, utils, settings
 from src.user import User
 
 
@@ -53,7 +53,10 @@ class MainWindow(QMainWindow):
         self.bot_stopped = True
         self.input_ls = [''] * 12
         self.gui_user = User()
+        self.settings = settings.CustomDialog()
+        self.settings.interval.connect(self.set_interval)
         self.test_run = False
+        self.interval = 5
 
         self.timer = QTimer()
         self.timer.setSingleShot(True)
@@ -66,6 +69,16 @@ class MainWindow(QMainWindow):
 
         sys.stdout = Stream(newText=self.onUpdateText)
     
+    def handle_open_settings(self):
+        self.settings.exec()
+        #settings.open(self)
+    
+    # maybe set these in self and wait for bot to be in wait part to change them in worker obj?
+    def set_interval(self, interval):
+        self.interval = interval
+        self.worker.interval = interval
+    
+    # maybe set these in self and wait for bot to be in wait part to change them in worker obj?
     def set_test_run(self, checked):
         self.test_run = checked
         self.worker.test = checked
