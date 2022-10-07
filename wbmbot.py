@@ -36,9 +36,8 @@ if args.cli:
             prev_page_num = 1
 
 
-        accept_cookies(driver, float(args.latency_wait))
 
-        print(f"[{utils.date()}] Looking for flats..")
+        print(f"{accept_cookies(driver, float(args.latency_wait))}\n[{utils.date()}] Looking for flats..")
         
         
         if scrape_flats(driver):
