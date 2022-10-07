@@ -1,11 +1,10 @@
 from PyQt5.QtGui import QPalette, QColor, QTextCursor, QKeySequence
 from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread, QTimer
 from PyQt5.QtWidgets import (
-    QMainWindow, QApplication, QDateEdit, QFrame, QTextEdit,
-    QLabel, QCheckBox, QComboBox, QListWidget, QLineEdit,
-    QLineEdit, QSpinBox, QDoubleSpinBox, QSlider, QPushButton,
-    QMainWindow, QApplication, QVBoxLayout, QHBoxLayout,
-    QLabel, QToolBar, QAction, QStatusBar, QWidget
+    QDateEdit, QFrame, QTextEdit,
+    QLabel, QCheckBox, QComboBox, QLineEdit,
+    QLineEdit, QSpinBox, QDoubleSpinBox, QPushButton,
+    QVBoxLayout, QHBoxLayout, QLabel, QAction, QWidget
 )
 
 def setup(self):
@@ -16,19 +15,33 @@ def setup(self):
         ## File
         file_menu = menu.addMenu("&File")
 
-        # Load config from condig file
+        # Load config from config file
         load_config_btn = QAction("&Open config file", self)
         load_config_btn.setStatusTip("Load configuration to run the bot with from configuration file.")
         load_config_btn.triggered.connect(self.handle_load_conf_dlg)
         load_config_btn.setShortcut(QKeySequence("Ctrl+o"))
         file_menu.addAction(load_config_btn)
 
-        # Save config to condig file
+        # Save config to config file
         save_config_btn = QAction("&Save config to file", self)
         save_config_btn.setStatusTip("Save current configuration to configuration file.")
         save_config_btn.triggered.connect(self.handle_save_conf_dlg)
         save_config_btn.setShortcut(QKeySequence("Ctrl+s"))
         file_menu.addAction(save_config_btn)
+
+        # Load log from file
+        load_log_btn = QAction("&Open log file", self)
+        load_log_btn.setStatusTip("Load log to run the bot with from log file.")
+        load_log_btn.triggered.connect(self.handle_load_conf_dlg)
+        load_log_btn.setShortcut(QKeySequence("Ctrl+Alt+o"))
+        file_menu.addAction(load_log_btn)
+
+        # Save log to log file
+        save_log_btn = QAction("&Save log to file", self)
+        save_log_btn.setStatusTip("Save sent applications from log to file.")
+        save_log_btn.triggered.connect(self.handle_save_conf_dlg)
+        save_log_btn.setShortcut(QKeySequence("Ctrl+Alt+s"))
+        file_menu.addAction(save_log_btn)
 
         ## Settings
         settings_menu = menu.addMenu("&Settings")

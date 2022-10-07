@@ -73,6 +73,7 @@ class MainWindow(QMainWindow):
         self.test_run = False
         self.interval = 5
         self.config_file = self.qsettings.value("config_file_path", 'config.yaml')
+        self.cb_checked = self.qsettings.value('save_on_exit', False, type=bool)
         self.user_saved = True
 
         # Setup stuff
@@ -196,8 +197,10 @@ class MainWindow(QMainWindow):
     
 
     def closeEvent(self, event):
-        if not self.user_saved:
-            response = self.save_on_exit_dlg.exec()
+        if not self.user_saved and not self.cb_checked:
+            response, self.cb_checked = self.save_on_exit_dlg.exec()
+            
+            self.qsettings.setValue('save_on_exit', self.cb_checked)
 
             if response == QMessageBox.Cancel:
                 event.ignore()
@@ -208,9 +211,9 @@ class MainWindow(QMainWindow):
                     event.ignore()
                     return
 
-            self.thread.quit
-            sys.stdout = sys.__stdout__
-            event.accept()
+        self.thread.quit
+        sys.stdout = sys.__stdout__
+        event.accept()
 
 
     def onUpdateText(self, text):
