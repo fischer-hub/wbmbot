@@ -3,7 +3,6 @@
 import sys, os, time
 from PyQt5.QtWidgets import QApplication
 from src.app import MainWindow
-from src.engine import*
 from src import utils
 from src.engine.init import init
 from src.engine.cli_setup import setup
@@ -31,7 +30,7 @@ if args.cli:
 
         if not page_changed:
             
-            print(f"[{utils.date()}] Connecting to ", start_url)
+            print(f"[{utils.date()}] Connecting to {start_url} ..")
             driver.get(start_url)
             curr_page_num = 1
             prev_page_num = 1
@@ -90,8 +89,8 @@ if args.cli:
 
         if not page_changed:
 
-            print(f"[{utils.date()}] Reloading main page..")
             time.sleep(float(args.interval) * 60)
+            print(f"[{utils.date()}] Reloading main page..")
         
         else:
         

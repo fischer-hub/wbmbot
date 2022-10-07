@@ -5,9 +5,11 @@ from src import utils
 
 def accept_cookies(driver, l):
     if len(driver.find_elements(By.XPATH, '//*[@id="cdk-overlay-0"]/div[2]/div[2]/div[2]/button[2]')) > 0:
-        print(f"[{utils.date()}] Accepting cookies..")
         driver.find_element(By.XPATH, '//*[@id="cdk-overlay-0"]/div[2]/div[2]/div[2]/button[2]').click()
         time.sleep(l)
+        return f"[{utils.date()}] Accepting cookies.."
+    else:
+        return ''
 
 
 def scrape_flats(driver):

@@ -1,8 +1,21 @@
 # worker.py
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 import time
 from src.user import User
 from src import utils
+from src import utils
+from src.engine.init import init
+from src.engine.interact import *
+
+
+class Args():
+    def __init__(self, h, t, o, l, i):
+        self.headless_off = h
+        self.test = t
+        self.log = o
+        self.latency_wait = l
+        self.interval = i
+
 
 class Worker(QObject):
     finished = pyqtSignal()
@@ -17,193 +30,83 @@ class Worker(QObject):
 
     @pyqtSlot()
     def run_wbmbot(self):
-        import sys, time, datetime, hashlib, yaml, os.path
-        from selenium import webdriver 
-        from selenium.webdriver.chrome.options import Options
-        from selenium.webdriver.chrome.service import Service
-        from selenium.webdriver.common.by import By
-        from webdriver_manager.chrome import ChromeDriverManager
 
+        self.args = Args(self.headless_off, self.test, 'log.txt', 1.5, self.interval)
+        user, flat, start_url, driver, page_changed, curr_page_num = init(self.args)
 
-        chrome_options = Options()
-        chrome_options.add_argument("--disable-extensions")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.headless = self.headless_off
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        driver.implicitly_wait(5)
-
-        curr_page_num = 1
-        page_changed = False
-        TEST = self.test
-        if TEST: self.console_out_sig.emit(f"------------------TEST {self.interval} RUN------------------")
-
-        class Flat:
-            def __init__(self, flat_elem):
-                flat_attr       = flat_elem.split('\n')
-                attr_size       = len(flat_attr)
-                self.title      = flat_attr[0] if attr_size > 0 else ''
-                self.district   = flat_attr[4] if attr_size > 4 else ''
-                self.street     = flat_attr[5] if attr_size > 5 else ''
-                self.zip_code   = flat_attr[6].split(' ')[0] if attr_size > 6 else ''
-                self.city       = flat_attr[6].split(' ')[1] if attr_size > 6 else ''
-                self.total_rent = flat_attr[8] if attr_size > 8 else ''
-                self.size       = flat_attr[10] if attr_size > 10 else ''
-                self.rooms      =  flat_attr[12] if attr_size > 12 else ''
-                self.wbs        = True if ('wbs' in flat_elem or 'WBS' in flat_elem) else False
-                self.hash       = hashlib.sha256(flat_elem.encode('utf-8')).hexdigest()
-
-
-        def next_page(curr_page_num):
-            if driver.find_elements(By.XPATH, '/html/body/main/div[2]/div[1]/div/nav/ul/li[4]/a'):
-                page_list = driver.find_element(By.XPATH, "/html/body/main/div[2]/div[1]/div/nav/ul")
-                self.console_out_sig.emit(f"[{utils.date()}] Another page of flats was detected, switching to page {curr_page_num +1}/{len(page_list.find_elements(By.TAG_NAME, 'li'))-2}..")
-                try:
-                    page_list.find_elements(By.TAG_NAME, 'li')[curr_page_num + 1].click()
-                    return curr_page_num + 1
-                except:
-                    self.console_out_sig.emit(f"[{utils.date()}] Failed to switch page, returning to main page..")
-                    return curr_page_num
-            else:
-                self.console_out_sig.emit(f"[{utils.date()}] Can not switch page, lastpage reached..")
-                return curr_page_num
-
-        def continue_btn():
-            self.console_out_sig.emit(f"[{utils.date()}] Looking for continue button..")
-            continue_btn = flat_elem.find_element(By.XPATH, '//*[@title="Details"]')
-            self.console_out_sig.emit(f"[{utils.date()}] Flat link found: {continue_btn.get_attribute('href')}")
-            continue_btn.location_once_scrolled_into_view
-            driver.get(continue_btn.get_attribute('href'))
-
-        def fill_form(email):
-            self.console_out_sig.emit(f"[{utils.date()}] Filling out form for email adress '{email}'..")
-            driver.find_element(By.XPATH, '//*[@id="c722"]/div/div/form/div[2]/div[1]/div/div/div[1]/label').click()
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_wbsgueltigbis"]').send_keys(self.user.wbs_date)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_wbszimmeranzahl"]').send_keys(self.user.wbs_rooms)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_einkommensgrenzenacheinkommensbescheinigung9"]').send_keys(self.user.wbs_num)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_name"]').send_keys(self.user.last_name)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_vorname"]').send_keys(self.user.first_name)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_strasse"]').send_keys(self.user.street)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_plz"]').send_keys(self.user.zip_code)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_ort"]').send_keys(self.user.city)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_e_mail"]').send_keys(email)
-            driver.find_element(By.XPATH, '//*[@id="powermail_field_telefon"]').send_keys(self.user.phone)
-            driver.find_element(By.XPATH, '//*[@id="c722"]/div/div/form/div[2]/div[14]/div/div/div[1]/label').click()
-
-        # check if config exists, else start setup
-        """ if os.path.isfile("config.yaml"):
-            self.console_out_sig.emit(f"[{utils.date()}] Loading config..")
-            self.user = self.self.user.parse_config_file('config.yaml')
-        else:
-            self.console_out_sig.emit(f"[{utils.date()}] No config file found, starting setup..")
-            setup()
-            self.console_out_sig.emit(f"[{utils.date()}] Loading config..")
-            self.self.user.parse_config_file('config.yaml') """
-
-
-        if not os.path.isfile('log.txt'): open('log.txt', 'a').close()
-
-        start_url = f"file://{os.getcwd()}/test-data/wohnung_mehrere_seiten.html" if TEST else "https://www.wbm.de/wohnungen-berlin/angebote/"
-        if not os.path.isfile(f"{os.getcwd()}/test-data/wohnung_mehrere_seiten.html"):
-            self.console_out_sig.emit(f"[{utils.date()}] {os.getcwd()}/test-data/wohnung_mehrere_seiten.html\n not found")
-
-        # We could actually just use while True, since we break the loop anyway before reaching this code if self.running is False..
         while self.running:
 
-            self.console_out_sig.emit(f"[{utils.date()}] Connecting to {start_url}")
 
-            # If we are on same page as last iteration, there probably is only one page or last page was reached and we want to reload the first page
             if not page_changed:
+                
+                self.console_out_sig.emit(f"[{utils.date()}] Connecting to {start_url} ..")
                 driver.get(start_url)
                 curr_page_num = 1
                 prev_page_num = 1
 
-            # Check if cookie dialog is displayed and accept if so
-            if len(driver.find_elements(By.XPATH, '//*[@id="cdk-overlay-0"]/div[2]/div[2]/div[2]/button[2]')) > 0:
-                self.console_out_sig.emit(f"[{utils.date()}] Accepting cookies..")
-                driver.find_element(By.XPATH, '//*[@id="cdk-overlay-0"]/div[2]/div[2]/div[2]/button[2]').click()
+
+            self.console_out_sig.emit(f"{accept_cookies(driver, float(self.args.latency_wait))}\n[{utils.date()}] Looking for flats..")
             
-            # Find all flat offers displayed on current page
-            self.console_out_sig.emit(f"[{utils.date()}] Looking for flats..")
-            all_flats = driver.find_elements(By.CSS_SELECTOR, ".row.openimmo-search-list-item")
             
-            # If there is at least one flat start further checks
-            if all_flats:
+            if scrape_flats(driver):
+                
+                self.console_out_sig.emit(f"[{utils.date()}] Found {len(scrape_flats(driver))} flat(s) in total:")
 
-                self.console_out_sig.emit(f"[{utils.date()}] Found {len(all_flats)} flat(s) in total:")
 
-                # For every flat do checks
-                for i in range(0,len(all_flats)):
+                for i in range(0,len(scrape_flats(driver))):
                     
-                    time.sleep(1.5)
+                    flat.parse_flat_elem(scrape_flats(driver)[i])
 
-                    # We need to generate the flat_elem every iteration because otherwise they will go stale for some reason
-                    all_flats = driver.find_elements(By.CSS_SELECTOR, ".row.openimmo-search-list-item")
-                    flat_elem = all_flats[i]
+
+                    if utils.already_applied(flat, self.args.log):
+
+                        self.console_out_sig.emit(f"[{utils.date()}] Oops, we already applied for flat: {flat.title}!")
+
+                    elif utils.filter_triggered(flat, user):
+
+                        self.console_out_sig.emit(f"[{utils.date()}] Ignoring flat '{flat.title}' because it contains filter keyword(s).")
                     
-                    # Create flat object
-                    flat = Flat(flat_elem.text)
+                    else:
 
-                    # Open log file
-                    with open("log.txt", "r") as myfile:
-                        log = myfile.read()
-                    
-                    # Check if we already applied to flat by looking for its unique hash in the log file
-                    for email in self.user.email:
+                        self.console_out_sig.emit(f"[{utils.date()}] Applying for flat: {flat.title}..")
 
-                        # We need to generate the flat_elem every iteration because otherwise they will go stale for some reason
-                        all_flats = driver.find_elements(By.CSS_SELECTOR, ".row.openimmo-search-list-item")
-                        flat_elem = all_flats[i]
-                        if (str(flat.hash) + str(email).strip()) not in log:
 
-                            # Check if we omit flat because of filter keyword contained
-                            if any(str(keyword).strip() in flat_elem.text.lower() for keyword in self.user.filter):
-                                self.console_out_sig.emit(f"[{utils.date()}] Ignoring flat '{flat.title}' because it contains filter keyword(s).")
-                                break
-                            else:
-                                self.console_out_sig.emit(f"[{utils.date()}] Title: {flat.title}")
+                        for email in user.email:
+                        
+                            click_continue(scrape_flats(driver)[i], driver, float(self.args.latency_wait))
 
-                                # Find and click continue button on current flat
-                                continue_btn()
+                            fill_form(email, driver, user, float(self.args.latency_wait))
 
-                                # Fill out application form on current flat using info stored in self.user object
-                                fill_form(str(email).strip())
-                                
-                                # Submit form
-                                driver.find_element(By.XPATH, '//*[@id="c722"]/div/div/form/div[2]/div[15]/div/div/button').click()
+                            submit_and_go_back(driver, float(self.args.latency_wait))
 
-                                # Write flat info to log file
-                                with open("log.txt", "a") as myfile:
-                                    myfile.write(f"[{utils.date()}] - ID: \nApplication sent for flat:\n{flat.title}\n{flat.street}\n{flat.city + ' ' + flat.zip_code}\ntotal rent: {flat.total_rent}\nflat size: {flat.size}\nrooms: {flat.rooms}\nwbs: {flat.wbs}\nhash: {flat.hash}{str(email).strip()}\n\n")
 
-                                # Increment (not really used anymore)
-                                self.console_out_sig.emit(f"[{utils.date()}] Done!")
-                                
-                                time.sleep(1.5)
-                                driver.get(start_url)
-                        else:
-                            # Flats hash was found in log file
-                            self.console_out_sig.emit(f"[{utils.date()}] Oops, we already applied for flat: {flat.title}, with ID: !")
-                            break
+                        utils.log_flat(flat, self.args.log)
 
-                    # We checked all flats on this page, try to switch to next page if exists. This should be called in last iteration
-                    if i == len(all_flats)-1: 
+
+                    if i == len(scrape_flats(driver))-1: 
                         prev_page_num = curr_page_num
-                        curr_page_num = next_page(curr_page_num)
+                        curr_page_num = next_page(curr_page_num, driver, float(self.args.latency_wait))
                         page_changed = curr_page_num != prev_page_num
 
+
             else:
-                # List of flats is empty there is no flat displayed on current page
+
                 self.console_out_sig.emit(f"[{utils.date()}] Currently no flats available :(")
 
-            if not self.running:
-                break
 
-            if not page_changed: 
-                time.sleep(self.interval * 60)
+            if not self.running: break
+
+            if not page_changed:
+                
+                for i in range(0,60):
+                    if not self.running: break
+                    time.sleep(float(self.args.interval))
+
+                self.console_out_sig.emit(f"[{utils.date()}] Reloading main page..")
+            
             else:
+            
                 time.sleep(1.5)
-
-            self.console_out_sig.emit(f"[{utils.date()}] Reloading main page..")
 
         driver.quit()
         self.finished.emit()
