@@ -1,6 +1,4 @@
-import sys, time, datetime, hashlib, yaml, os.path
-from src import utils
-import re
+import yaml, re
 
 class User:
     def __init__(self):
@@ -47,7 +45,7 @@ class User:
                 else:
                     self.wbs_num  = ''
             except yaml.YAMLError as exc:
-                print(f"[{utils.date()}] Error opening config file!\n{exc}")
+                return f"Error opening config file!\n{exc}"
     
 
     def parse_user_input(self, user_input_ls):
@@ -65,10 +63,34 @@ class User:
         self.wbs_num    = user_input_ls[11]
     
 
+    def merge(self, user):
+        if not self.first_name: self.first_name = user.first_name
+        if not self.last_name:  self.last_name  = user.last_name
+        if not self.street:     self.street     = user.street
+        if not self.zip_code:   self.zip_code   = user.zip_code
+        if not self.city:       self.city       = user.city
+        if not self.email:      self.email      = user.email
+        if not self.phone:      self.phone      = user.phone
+        if not self.wbs:        self.wbs        = user.wbs
+        if not self.wbs_date:   self.wbs_date   = user.wbs_date
+        if not self.wbs_rooms:  self.wbs_rooms  = user.wbs_rooms
+        if not self.filter:     self.filter     = user.filter
+        if not self.wbs_num:    self.wbs_num    = user.wbs_num
+
+
+
     def check(self):
         if not bool(self.first_name and self.last_name and self.email): return 'Please fill out at least all red fields!'
         if self.zip_code and not self.zip_code.isdigit(): return 'Zip code contains non numerical character!'
         if self.zip_code and len(self.zip_code) < 5: return 'Zip code has to be 5 digits long!'
         if self.phone and not self.phone.isdigit(): return 'Phone number contains non numerical character!'
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email): return 'Email address is not valid!'
+        if not any(re.match(r"[^@]+@[^@]+\.[^@]+", email) for email in self.email): return 'Email address is not valid!'
+        if (not self.wbs) and bool(self.wbs_date or self.wbs_num or self.wbs_rooms): return 'WBS data was provided but the WBS checkbox was unchecked!'
+    
+
+    def small_check(self):
+        if self.zip_code and not self.zip_code.isdigit(): return 'Zip code contains non numerical character!'
+        if self.zip_code and len(self.zip_code) < 5: return 'Zip code has to be 5 digits long!'
+        if self.phone and not self.phone.isdigit(): return 'Phone number contains non numerical character!'
+        if not any(re.match(r"[^@]+@[^@]+\.[^@]+", email) for email in self.email): return 'Email address is not valid!'
         if (not self.wbs) and bool(self.wbs_date or self.wbs_num or self.wbs_rooms): return 'WBS data was provided but the WBS checkbox was unchecked!'

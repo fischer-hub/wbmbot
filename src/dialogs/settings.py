@@ -1,12 +1,5 @@
-from PyQt5.QtGui import QPalette, QColor, QTextCursor, QKeySequence
-from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread, QTimer
-from PyQt5.QtWidgets import (
-    QMainWindow, QApplication, QDateEdit, QFrame, QTextEdit,
-    QLabel, QCheckBox, QComboBox, QListWidget, QLineEdit,
-    QLineEdit, QSpinBox, QDoubleSpinBox, QSlider, QPushButton,
-    QMainWindow, QApplication, QVBoxLayout, QHBoxLayout,
-    QLabel, QToolBar, QAction, QStatusBar, QWidget, QDialog, QDialogButtonBox
-)
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QLabel, QDoubleSpinBox, QHBoxLayout,QLabel, QDialog
 
 class AdvancedSettings(QDialog):
     interval = pyqtSignal(float)
@@ -25,7 +18,6 @@ class AdvancedSettings(QDialog):
         interval_input.setValue(5)
         interval_input.valueChanged.connect(self.handle_interval_input)
 
-        #QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         main = QHBoxLayout()
         main.addWidget(QLabel('Interval'))
         main.addWidget(interval_input)
