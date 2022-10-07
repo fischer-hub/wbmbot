@@ -2,7 +2,7 @@
 
 import sys, os, time
 from PyQt5.QtWidgets import QApplication
-from app import MainWindow
+from src.app import MainWindow
 from src.engine import*
 from src import utils
 from src.engine.init import init
