@@ -52,6 +52,7 @@ class MainWindow(QMainWindow):
         # Objects
         self.settings_dlg = settings.AdvancedSettings()
         self.settings_dlg.interval.connect(self.set_interval)
+        self.settings_dlg.latency.connect(self.set_latency)
 
         self.save_on_exit_dlg = save_on_exit.SaveOnExit()
 
@@ -72,6 +73,7 @@ class MainWindow(QMainWindow):
         self.input_ls = [''] * 12
         self.test_run = False
         self.interval = 5
+        self.latency = 1.5
         self.config_file = self.qsettings.value("config_file_path", 'config.yaml')
         self.cb_checked = self.qsettings.value('save_on_exit', False, type=bool)
         self.user_saved = True
@@ -85,6 +87,7 @@ class MainWindow(QMainWindow):
         print(f"Loading config file {self.config_file} ..", end='')
         self.update_user(self.config_file)
         self.set_config()
+
 
     
     def set_config(self):
@@ -122,6 +125,11 @@ class MainWindow(QMainWindow):
     def handle_open_settings(self):
         self.settings_dlg.exec()
     
+
+    def set_latency(self, latency):
+        self.latency = latency
+        self.worker.latency = latency
+
 
     # maybe set these in self and wait for bot to be in wait part to change them in worker obj?
     def set_interval(self, interval):

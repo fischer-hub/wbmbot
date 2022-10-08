@@ -43,7 +43,7 @@ def arg_parse():
     parser.add_argument("-t", "--test", action='store_true', help="If set, run test-run on the test data. This does not actually connect to wbm.de.")
     parser.add_argument("-H", "--headless_off", action='store_false', help="If set, turn off headless run. The bot will run in the opened web browser.")
     parser.add_argument("-i", "--interval", default=5, help="Set the time interval in minutes to check for new flats on wbm.de. [default: 5]")
-    parser.add_argument("-l", "--latency_wait", default=1.5, help="Set time to wait after interaction with website. Slow connections might need a higher latensy-wait-time. [default: 1.5s]")
+    parser.add_argument("-l", "--latency_wait", default=1.5, help="Set time to wait after interaction with website. Slow connections might need a higher latency-wait-time. [default: 1.5s]")
     parser.add_argument("-y", "--yaml", default='config.yaml', help= "Provide configuration file name to load config from.[default: 'config.yaml']")
     parser.add_argument("-o", "--log", default='log.txt', help="Provide log file name to write log data to. [default: 'log.txt']")
     return parser.parse_args()

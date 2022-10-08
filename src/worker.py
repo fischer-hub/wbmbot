@@ -26,6 +26,7 @@ class Worker(QObject):
     running = False
     user = User()
     var = ''
+    latency = 1.5
 
 
     @pyqtSlot()
@@ -45,7 +46,7 @@ class Worker(QObject):
                 prev_page_num = 1
 
 
-            self.console_out_sig.emit(f"{accept_cookies(driver, float(self.args.latency_wait))}\n[{utils.date()}] Looking for flats..")
+            self.console_out_sig.emit(f"{accept_cookies(driver, float(self.latency))}\n[{utils.date()}] Looking for flats..")
             
             
             if scrape_flats(driver):
@@ -73,11 +74,11 @@ class Worker(QObject):
 
                         for email in user.email:
                         
-                            click_continue(scrape_flats(driver)[i], driver, float(self.args.latency_wait))
+                            click_continue(scrape_flats(driver)[i], driver, float(self.latency))
 
-                            fill_form(email, driver, user, float(self.args.latency_wait))
+                            fill_form(email, driver, user, float(self.latency))
 
-                            submit_and_go_back(driver, float(self.args.latency_wait))
+                            submit_and_go_back(driver, float(self.latency))
 
 
                         utils.log_flat(flat, self.args.log)
@@ -85,7 +86,7 @@ class Worker(QObject):
 
                     if i == len(scrape_flats(driver))-1: 
                         prev_page_num = curr_page_num
-                        curr_page_num = next_page(curr_page_num, driver, float(self.args.latency_wait))
+                        curr_page_num = next_page(curr_page_num, driver, float(self.latency))
                         page_changed = curr_page_num != prev_page_num
 
 

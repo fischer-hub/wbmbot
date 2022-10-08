@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QLabel, QDoubleSpinBox, QHBoxLayout, QVBoxLayout, QL
 
 class AdvancedSettings(QDialog):
     interval = pyqtSignal(float)
+    latency = pyqtSignal(float)
 
     def __init__(self):
         super().__init__()
@@ -26,7 +27,7 @@ class AdvancedSettings(QDialog):
         latency_input.setSuffix(" sec")
         latency_input.setSingleStep(0.1)
         latency_input.setValue(1.5)
-        #latency_input.valueChanged.connect(self.handle_interval_input)
+        latency_input.valueChanged.connect(self.handle_latency_input)
 
         main = QVBoxLayout()
         interval_label = QHBoxLayout()
@@ -41,4 +42,7 @@ class AdvancedSettings(QDialog):
 
     def handle_interval_input(self, interval):
         self.interval.emit(interval)
+    
+    def handle_latency_input(self, latency):
+        self.latency.emit(latency)
 
