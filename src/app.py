@@ -42,9 +42,11 @@ class MainWindow(QMainWindow):
         self.setFixedSize(QSize(700, 500))
 
         # Objects
+        self.setup_bot()
         self.settings_dlg = settings.AdvancedSettings()
         self.settings_dlg.interval.connect(self.set_interval)
         self.settings_dlg.latency.connect(self.set_latency)
+        self.settings_dlg.cheat_sig.connect(self.set_cheat)
 
         self.browse_log_dlg   = browse_log.BrowseLog()
         self.browse_log_dlg.set_log.connect(self.set_log)
@@ -73,10 +75,11 @@ class MainWindow(QMainWindow):
         self.config_file = self.qsettings.value("config_file_path", 'config.yaml')
         self.log_file_path = self.qsettings.value("log_file_path", 'log.txt')
         self.cb_checked = self.qsettings.value('save_on_exit', False, type=bool)
+        self.cheat = self.qsettings.value('cheat', False, type=bool)
+        self.settings_dlg.cheat_input.setCheckState(Qt.Checked if self.cheat else Qt.Unchecked)
         self.user_saved = True
 
         # Setup stuff
-        self.setup_bot()
 
         sys.stdout = Stream(newText=self.onUpdateText)
 
@@ -84,10 +87,17 @@ class MainWindow(QMainWindow):
         print(f"Loading config file {self.config_file} ..", end='')
         self.update_user(self.config_file)
         self.set_config()
+    
+    
+    def set_cheat(self, checked):
+        self.cheat = checked
+        self.bot.cheat = checked
+        self.qsettings.setValue('cheat', checked)
 
 
     def set_log(self, log_file_path):
         self.log_file_path = log_file_path
+        self.bot.log = log_file_path
         self.qsettings.setValue("log_file_path", log_file_path)
         print(f"Log file {log_file_path} set.")
     
@@ -101,7 +111,6 @@ class MainWindow(QMainWindow):
         if self.gui_user.street: self.street_input.setText(self.gui_user.street)
         if self.gui_user.city: self.city_input.setText(self.gui_user.city)
         if self.gui_user.filter: self.filter_input.setText((',').join(self.gui_user.filter))
-        #self.firstname_input.setText("new config")
 
 
     def handle_save_log_dlg(self):

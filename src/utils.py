@@ -15,7 +15,7 @@ def already_applied(flat, log_file_path='log1.txt'):
 
 
 def filter_triggered(flat, user):
-
+    
     return (user.filter[0] and any(str(keyword).strip() in flat.text().lower() for keyword in user.filter))
 
 

@@ -27,7 +27,7 @@ class Worker(QObject):
     var = ''
     latency = 1.5
     cli = False
-    experimental = False
+    cheat = False
     yaml = ''
     log = 'log.txt'
 
@@ -52,6 +52,10 @@ class Worker(QObject):
             utils.console_log(self, "Loading config..")
 
             user.parse_config_file(self.yaml)
+        
+        else:
+
+            user = self.user
 
 
         while self.running:
@@ -82,7 +86,7 @@ class Worker(QObject):
 
                     if utils.already_applied(flat, self.args.log):
 
-                        utils.console_log(self, f"Oops, we already applied for flat: {flat.title}!")
+                        utils.console_log(self, f"Oops, we already applied for flat: {flat.title} {self.log}!")
 
                     elif utils.filter_triggered(flat, user):
 
@@ -98,8 +102,12 @@ class Worker(QObject):
 
 
                         for idx, email in enumerate(user.email):
-
-                            if self.experimental: 
+                            
+                            if not self.running: 
+                                
+                                break
+                            
+                            if self.cheat: 
                                 
                                 utils.cheat(user, real_fname, real_lname, idx)
 
