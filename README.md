@@ -9,7 +9,31 @@ This does not interact with the bot yet!!
 A simple selenium based python bot to check the website of WBM Wohnungsbaugesellschaft Berlin-Mitte mbH for new flats and automatically apply for them, since only the first 1000 applicants will be considered in the random selection process for apartment viewing.
 
 # Getting started
-To install all dependencies you can use the [`conda`](https://docs.conda.io/en/latest/) package manager and create an environment from the `environment.yaml` file located in the project directory as follows:
+
+## Running the packaged version
+The usage of the packaged version of the wbmbot is pretty simple, just download the package version for your operating system and open the program like anyother desktop application.
+
+## Running the source code directly
+If you want to run the project on your own you first have to clone the repository and install the necessary dependencies. Clone the repository and change to the project directory by running the following command in your terminal:
+
+```
+# clone the repository
+git clone https://github.com/fischer-hub/wbmbot.git
+
+# change to project directory
+cd wbmbot
+```
+
+To install all dependencies you can either use the python index package index [`pip`](https://pypi.org/) or the [`conda`](https://docs.conda.io/en/latest/) package manager. (Or install everything manually if you insist on it...)
+
+### Pip
+If you want to use the `python package index` install the requirements define in the `requirements.txt` file located in the project directory as follows:
+```
+pip install -r requirements.txt
+```
+
+### Conda
+If you want to use the `conda` package manager, create an environment from the `environment.yaml` file located in the project directory as follows:
 ```
 # create conda environment form environment file
 conda env create -f environment.yaml
@@ -17,7 +41,6 @@ conda env create -f environment.yaml
 # activate conda environment
 conda activate wbmbot
 ```
-If you don't have `conda` installed I recommend installing it or installing all dependencies manually (good luck with that). Alternatively you can install the dependencies using `pip`, since all of them should be available on there too.
 
 
 To start the bot simply run the below command in your terminal in the project directory:

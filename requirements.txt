@@ -1,0 +1,4 @@
+selenium
+pyyaml
+webdriver-manager
+PyQt5
