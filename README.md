@@ -42,13 +42,19 @@ conda env create -f environment.yaml
 conda activate wbmbot
 ```
 
+# Start the wbmbot
 
-To start the bot simply run the below command in your terminal in the project directory:
+To start the bot with its GUI simply run the below command in your terminal in the project directory:
 ```
-python3 main.py
+python3 wbmbot.py
 ```
 
-If you are running the bot for the first time the bot will start the setup process asking all the necessary information for applications on wbm.de.
+To start the bot in command line mode run the below command in your terminal in the project directory:
+```
+python3 wbmbot.py -c
+```
+
+If you are running the bot in command line mode for the first time the bot will start the setup process asking all the necessary information for applications on wbm.de.
 Note that these informations will be saved unencrypted to a local `config.yaml` file in *human readable* format!!
 If you don't want to use the setup process for this, you can just create a `config.yaml` file yourself in the project directory of format:
 
@@ -69,13 +75,17 @@ zip_code: '12345'
 
 # Parameters
 ```
-usage: main.py [-h] [-H] [-t] [-i INTERVAL]
+usage: wbmbot.py [-h] [-c] [-t] [-H] [-i INTERVAL] [-l LATENCY_WAIT] [-y YAML] [-o LOG]
 
 optional arguments:
   -h, --help            Show this help message and exit.
+  -c, --cli             If set, run bot on command line only instead of starting the GUI.
   -H, --headless_off    If set, turn off headless run. The bot will run in the opened browser.
   -t, --test            If set, run test-run on the test data. This does not actually connect to wbm.de.
   -i, --interval        Set the time interval in minutes to check for new flats on wbm.de. [default: 5]
+  -l  --latency_wait    Set time to wait after interaction with website. Slow connections might need a higher latency-wait-time. [default: 1.5s]
+  -y  --yaml            Provide configuration file name to load config from.[default: 'config.yaml']
+  -o  --log             Provide log file name to write log data to. [default: 'log.txt']
 ```
 
 # Filtering
