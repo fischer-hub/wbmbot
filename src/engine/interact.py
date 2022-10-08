@@ -7,7 +7,7 @@ def accept_cookies(driver, l):
     if len(driver.find_elements(By.XPATH, '//*[@id="cdk-overlay-0"]/div[2]/div[2]/div[2]/button[2]')) > 0:
         driver.find_element(By.XPATH, '//*[@id="cdk-overlay-0"]/div[2]/div[2]/div[2]/button[2]').click()
         time.sleep(l)
-        return f"[{utils.date()}] Accepting cookies.."
+        return "Accepting cookies.."
     else:
         return ''
 

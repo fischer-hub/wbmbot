@@ -1,6 +1,6 @@
 from re import A
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QHBoxLayout, QTextEdit, QLabel, QDialog
+from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QHBoxLayout, QTextEdit, QDialog
 
 class BrowseLog(QDialog):
     set_log = pyqtSignal(str)

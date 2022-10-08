@@ -1,18 +1,10 @@
 #!/usr/bin/env python3
-from distutils.command.config import config
 import sys, os, yaml
 from src import ui, worker, utils
 from src.user import User
 from src.dialogs import save_on_exit, settings, browse_log
 
-
-from PyQt5.QtWidgets import (
-    QMainWindow, QApplication, QMessageBox, QFrame, QTextEdit,
-    QLabel, QCheckBox, QComboBox, QListWidget, QLineEdit,
-    QLineEdit, QSpinBox, QDoubleSpinBox, QSlider, QPushButton,
-    QMainWindow, QApplication, QVBoxLayout, QHBoxLayout,
-    QLabel, QToolBar, QAction, QStatusBar, QWidget, QFileDialog
-)
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QWidget, QFileDialog
 from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread, QTimer, QSettings
 from PyQt5.QtGui import QPalette, QColor
 
@@ -72,7 +64,7 @@ class MainWindow(QMainWindow):
 
         # Custom vars
         self.bot_running_bool = False
-        self.worker_created = False
+        self.bot_created = False
         self.bot_stopped = True
         self.input_ls = [''] * 12
         self.test_run = False
@@ -84,7 +76,7 @@ class MainWindow(QMainWindow):
         self.user_saved = True
 
         # Setup stuff
-        self.setup_worker()
+        self.setup_bot()
 
         sys.stdout = Stream(newText=self.onUpdateText)
 
@@ -116,7 +108,7 @@ class MainWindow(QMainWindow):
         file_name, _ = QFileDialog.getSaveFileName(self,"Save current log to file",f"{os.getcwd()}", "Text Files (*.txt);; Any (*)")
         if file_name.endswith('.yaml') or file_name.endswith('.yml'):
             with open(file_name, 'w') as outfile: # user vars() to create dict of member vars of user
-                yaml.dump(vars(self.worker.user), outfile, default_flow_style=False)
+                yaml.dump(vars(self.bot.user), outfile, default_flow_style=False)
             self.user_saved = True
             return True
         else:
@@ -134,7 +126,7 @@ class MainWindow(QMainWindow):
         file_name, _ = QFileDialog.getSaveFileName(self,"Save current configuration to file",f"{os.getcwd()}", "YAML Files (*.yaml *.yml);; Any (*)")
         if file_name.endswith('.yaml') or file_name.endswith('.yml'):
             with open(file_name, 'w') as outfile: # user vars() to create dict of member vars of user
-                yaml.dump(vars(self.worker.user), outfile, default_flow_style=False)
+                yaml.dump(vars(self.bot.user), outfile, default_flow_style=False)
             self.user_saved = True
             return True
         else:
@@ -157,19 +149,19 @@ class MainWindow(QMainWindow):
 
     def set_latency(self, latency):
         self.latency = latency
-        self.worker.latency = latency
+        self.bot.latency = latency
 
 
     # maybe set these in self and wait for bot to be in wait part to change them in worker obj?
     def set_interval(self, interval):
         self.interval = interval
-        self.worker.interval = interval
+        self.bot.interval = interval
     
 
     # maybe set these in self and wait for bot to be in wait part to change them in worker obj?
     def set_test_run(self, checked):
         self.test_run = checked
-        self.worker.test = checked
+        self.bot.test = checked
 
     
     def update_user(self, config_file = ''):
@@ -185,7 +177,7 @@ class MainWindow(QMainWindow):
             return False
         else:
             self.gui_user = new_user
-            self.worker.user = self.gui_user
+            self.bot.user = self.gui_user
             print(f"[{utils.date()}] Config changes saved.", end='')
             self.user_saved = False
             return True
@@ -196,19 +188,19 @@ class MainWindow(QMainWindow):
         self.timer.start(3000)
 
 
-    def setup_worker(self):
+    def setup_bot(self):
         # 1 - create Worker and Thread inside the Form
-        self.worker = worker.Worker()  # no parent!
+        self.bot = worker.Worker()  # no parent!
         self.thread = QThread()  # no parent!
         # 2 - Connect Worker`s Signals to Form method slots to post data.
-        self.worker.console_out_sig.connect(self.onUpdateText)
+        self.bot.console_out_sig.connect(self.onUpdateText)
         # 3 - Move the Worker workerect to the Thread workerect
-        self.worker.moveToThread(self.thread)
+        self.bot.moveToThread(self.thread)
         # 4 - Connect Worker Signals to the Thread slots
-        self.worker.finished.connect(self.handle_bot_stopped)
-        self.worker.finished.connect(self.thread.quit)
+        self.bot.finished.connect(self.handle_bot_stopped)
+        self.bot.finished.connect(self.thread.quit)
         # 5 - Connect Thread started signal to Worker operational slot method
-        self.thread.started.connect(self.worker.run_wbmbot)
+        self.thread.started.connect(self.bot.run)
 
 
     def handle_bot_stopped(self):
@@ -218,19 +210,19 @@ class MainWindow(QMainWindow):
     
 
     def handle_start_stop_btn(self):
-        if not self.worker.running:
+        if not self.bot.running:
             self.update_user()
             self.thread.start()
             self.start_bot_btn.setText("Stop bot")
             self.start_bot_btn.setStyleSheet("background-color: rgb(222,82,82)")
-            self.worker.running = True
+            self.bot.running = True
             self.bot_stopped = False
         else:
             print("Stopping bot ..", end='')
             self.start_bot_btn.setEnabled(False)
             self.start_bot_btn.setText("Start bot")
             self.start_bot_btn.setStyleSheet("background-color: rgb(128,242,159)")
-            self.worker.running = False        
+            self.bot.running = False        
     
 
     def closeEvent(self, event):
@@ -254,7 +246,7 @@ class MainWindow(QMainWindow):
 
 
     def onUpdateText(self, text):
-        if self.worker.running or self.bot_stopped: 
+        if self.bot.running or self.bot_stopped: 
             self.console_out.append(f"{text.strip()}")
     
 

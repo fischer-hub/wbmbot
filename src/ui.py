@@ -1,10 +1,9 @@
-from PyQt5.QtGui import QPalette, QColor, QTextCursor, QKeySequence
-from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QThread, QTimer
+from PyQt5.QtGui import QPalette, QColor, QKeySequence
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
-    QDateEdit, QFrame, QTextEdit,
-    QLabel, QCheckBox, QComboBox, QLineEdit,
-    QLineEdit, QSpinBox, QDoubleSpinBox, QPushButton,
-    QVBoxLayout, QHBoxLayout, QLabel, QAction, QWidget
+    QDateEdit, QFrame, QTextEdit, QLabel, QCheckBox, QComboBox, QLineEdit,
+    QLineEdit, QSpinBox, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QAction,
+    QWidget
 )
 
 def setup(self):

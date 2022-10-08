@@ -1,12 +1,11 @@
 # worker.py
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
-import time
+import time, os
 from src.user import User
-from src import utils
 from src import utils
 from src.engine.init import init
 from src.engine.interact import *
-
+from src.engine import cli_setup
 
 class Args():
     def __init__(self, h, t, o, l, i):
@@ -27,31 +26,53 @@ class Worker(QObject):
     user = User()
     var = ''
     latency = 1.5
+    cli = False
+    experimental = False
+    yaml = ''
+    log = 'log.txt'
 
 
     @pyqtSlot()
-    def run_wbmbot(self):
+    def run(self):
 
-        self.args = Args(self.headless_off, self.test, 'log.txt', 1.5, self.interval)
+        self.args = Args(self.headless_off, self.test, self.log, self.latency, self.interval)
+
         user, flat, start_url, driver, page_changed, curr_page_num = init(self.args)
+
+
+        if self.cli:
+            
+            if not os.path.isfile(self.yaml):
+
+                utils.console_log(self, f"No config file found, starting setup..")
+
+                cli_setup.setup(self.yaml)
+
+
+            utils.console_log(self, "Loading config..")
+
+            user.parse_config_file(self.yaml)
+
 
         while self.running:
 
 
             if not page_changed:
                 
-                self.console_out_sig.emit(f"[{utils.date()}] Connecting to {start_url} ..")
+                utils.console_log(self, f"Connecting to {start_url} ..")
                 driver.get(start_url)
                 curr_page_num = 1
                 prev_page_num = 1
 
 
-            self.console_out_sig.emit(f"{accept_cookies(driver, float(self.latency))}\n[{utils.date()}] Looking for flats..")
+            utils.console_log(self, f"{accept_cookies(driver, float(self.latency))}")
+            
+            utils.console_log(self, "Looking for flats..")
             
             
             if scrape_flats(driver):
                 
-                self.console_out_sig.emit(f"[{utils.date()}] Found {len(scrape_flats(driver))} flat(s) in total:")
+                utils.console_log(self, f"Found {len(scrape_flats(driver))} flat(s) in total:")
 
 
                 for i in range(0,len(scrape_flats(driver))):
@@ -61,18 +82,29 @@ class Worker(QObject):
 
                     if utils.already_applied(flat, self.args.log):
 
-                        self.console_out_sig.emit(f"[{utils.date()}] Oops, we already applied for flat: {flat.title}!")
+                        utils.console_log(self, f"Oops, we already applied for flat: {flat.title}!")
 
                     elif utils.filter_triggered(flat, user):
 
-                        self.console_out_sig.emit(f"[{utils.date()}] Ignoring flat '{flat.title}' because it contains filter keyword(s).")
+                        utils.console_log(self, f"Ignoring flat '{flat.title}' because it contains filter keyword(s).")
                     
                     else:
 
-                        self.console_out_sig.emit(f"[{utils.date()}] Applying for flat: {flat.title}..")
+                        utils.console_log(self, f"Applying for flat: {flat.title}..")
+
+                        real_fname = user.first_name
+
+                        real_lname = user.last_name
 
 
-                        for email in user.email:
+                        for idx, email in enumerate(user.email):
+
+                            if self.experimental: 
+                                
+                                utils.cheat(user, real_fname, real_lname, idx)
+
+                            utils.console_log(self, f"Applying with name: {user.first_name} {user.last_name}..")
+                            
                         
                             click_continue(scrape_flats(driver)[i], driver, float(self.latency))
 
@@ -80,6 +112,10 @@ class Worker(QObject):
 
                             submit_and_go_back(driver, float(self.latency))
 
+
+                        user.first_name = real_fname
+
+                        user.last_name = real_lname
 
                         utils.log_flat(flat, self.args.log)
 
@@ -92,7 +128,7 @@ class Worker(QObject):
 
             else:
 
-                self.console_out_sig.emit(f"[{utils.date()}] Currently www.google.de no flats available :(")
+                utils.console_log(self, f"Currently no flats available :(")
 
 
             if not self.running: break
@@ -103,7 +139,7 @@ class Worker(QObject):
                     if not self.running: break
                     time.sleep(float(self.args.interval))
 
-                self.console_out_sig.emit(f"[{utils.date()}] Reloading main page..")
+                utils.console_log(self, f"Reloading main page..")
             
             else:
             

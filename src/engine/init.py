@@ -17,9 +17,8 @@ def init(args):
 
     curr_page_num = 1
     page_changed = False
-    TEST = args.test
 
-    if TEST: 
+    if args.test: 
         print("------------------TEST RUN------------------")
         start_url = f"file://{os.getcwd()}/test-data/wohnung_mehrere_seiten.html"
     else:
