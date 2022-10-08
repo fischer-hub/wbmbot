@@ -3,7 +3,7 @@ from distutils.command.config import config
 import sys, os, yaml
 from src import ui, worker, utils
 from src.user import User
-from src.dialogs import save_on_exit, settings
+from src.dialogs import save_on_exit, settings, browse_log
 
 
 from PyQt5.QtWidgets import (
@@ -54,7 +54,11 @@ class MainWindow(QMainWindow):
         self.settings_dlg.interval.connect(self.set_interval)
         self.settings_dlg.latency.connect(self.set_latency)
 
+        self.browse_log_dlg   = browse_log.BrowseLog()
+        self.browse_log_dlg.set_log.connect(self.set_log)
+
         self.save_on_exit_dlg = save_on_exit.SaveOnExit()
+
 
         #self.load_conf_dlg = load_config.LoadConfig()
         #self.load_conf_dlg.interval.connect(self.handle_load_conf_dlg)
@@ -75,6 +79,7 @@ class MainWindow(QMainWindow):
         self.interval = 5
         self.latency = 1.5
         self.config_file = self.qsettings.value("config_file_path", 'config.yaml')
+        self.log_file_path = self.qsettings.value("log_file_path", 'log.txt')
         self.cb_checked = self.qsettings.value('save_on_exit', False, type=bool)
         self.user_saved = True
 
@@ -89,7 +94,12 @@ class MainWindow(QMainWindow):
         self.set_config()
 
 
+    def set_log(self, log_file_path):
+        self.log_file_path = log_file_path
+        self.qsettings.setValue("log_file_path", log_file_path)
+        print(f"Log file {log_file_path} set.")
     
+
     def set_config(self):
         self.firstname_input.setText(self.gui_user.first_name)
         self.lastname_input.setText(self.gui_user.last_name)
@@ -102,6 +112,24 @@ class MainWindow(QMainWindow):
         #self.firstname_input.setText("new config")
 
 
+    def handle_save_log_dlg(self):
+        file_name, _ = QFileDialog.getSaveFileName(self,"Save current log to file",f"{os.getcwd()}", "Text Files (*.txt);; Any (*)")
+        if file_name.endswith('.yaml') or file_name.endswith('.yml'):
+            with open(file_name, 'w') as outfile: # user vars() to create dict of member vars of user
+                yaml.dump(vars(self.worker.user), outfile, default_flow_style=False)
+            self.user_saved = True
+            return True
+        else:
+            return False
+
+
+    def handle_load_log_dlg(self):
+        log_file, _ = QFileDialog.getOpenFileName(self, "Open log from file", f"{os.getcwd()}", "Text Files (*.txt);; Any (*)")
+        
+        self.browse_log_dlg.set_text(log_file)
+        self.browse_log_dlg.exec()
+
+
     def handle_save_conf_dlg(self):
         file_name, _ = QFileDialog.getSaveFileName(self,"Save current configuration to file",f"{os.getcwd()}", "YAML Files (*.yaml *.yml);; Any (*)")
         if file_name.endswith('.yaml') or file_name.endswith('.yml'):
@@ -110,6 +138,7 @@ class MainWindow(QMainWindow):
             self.user_saved = True
             return True
         else:
+            QMessageBox.critical(self, "Save failed.", "Failed to save current configuration to file!", buttons=QMessageBox.Ok, defaultButton=QMessageBox.Ok)
             return False
 
 

@@ -32,14 +32,14 @@ def setup(self):
         # Load log from file
         load_log_btn = QAction("&Open log file", self)
         load_log_btn.setStatusTip("Load log to run the bot with from log file.")
-        load_log_btn.triggered.connect(self.handle_load_conf_dlg)
+        load_log_btn.triggered.connect(self.handle_load_log_dlg)
         load_log_btn.setShortcut(QKeySequence("Ctrl+Alt+o"))
         file_menu.addAction(load_log_btn)
 
         # Save log to log file
         save_log_btn = QAction("&Save log to file", self)
         save_log_btn.setStatusTip("Save sent applications from log to file.")
-        save_log_btn.triggered.connect(self.handle_save_conf_dlg)
+        save_log_btn.triggered.connect(self.handle_save_log_dlg)
         save_log_btn.setShortcut(QKeySequence("Ctrl+Alt+s"))
         file_menu.addAction(save_log_btn)
 

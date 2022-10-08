@@ -92,7 +92,7 @@ class Worker(QObject):
 
             else:
 
-                self.console_out_sig.emit(f"[{utils.date()}] Currently no flats available :(")
+                self.console_out_sig.emit(f"[{utils.date()}] Currently www.google.de no flats available :(")
 
 
             if not self.running: break
